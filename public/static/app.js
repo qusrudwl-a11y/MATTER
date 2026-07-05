@@ -11,6 +11,28 @@ axios.interceptors.request.use((config) => {
   if (API.token && !isAdminCall) config.headers.Authorization = `Bearer ${API.token}`;
   return config;
 });
+// 세션 만료/무효(401) 응답 전역 처리: 사용자 세션이 끊긴 경우 raw 에러를 화면에 노출하는 대신
+// 자동으로 로그아웃 처리 후 온보딩 화면으로 안내한다. 관리자 API 호출은 별도 세션 체계이므로 제외.
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+    const isAdminCall = url.startsWith('/admin');
+    if (status === 401 && !isAdminCall) {
+      const hadToken = !!API.token;
+      clearSession();
+      if (hadToken) {
+        alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+      }
+      navigate('/onboarding');
+      // render()의 catch 블록이 "오류가 발생했습니다" 메시지를 잠깐이라도 화면에 그리지 않도록
+      // 이미 처리된 에러임을 표시해둔다.
+      error.__handled = true;
+    }
+    return Promise.reject(error);
+  }
+);
 
 function setSession(token, user) {
   API.token = token;
@@ -72,7 +94,11 @@ async function render() {
         await routes[key](match, params);
       } catch (e) {
         console.error(e);
-        app.innerHTML = `<div class="p-8 text-center text-red-500">오류가 발생했습니다: ${escapeHtml(String(e.message || e))}</div>`;
+        // 401(세션 만료) 등 응답 인터셉터에서 이미 처리(자동 로그아웃+리다이렉트)된 에러는
+        // 화면에 별도의 에러 메시지를 그리지 않는다.
+        if (!e.__handled) {
+          app.innerHTML = `<div class="p-8 text-center text-red-500">오류가 발생했습니다: ${escapeHtml(String(e.message || e))}</div>`;
+        }
       }
       return;
     }
