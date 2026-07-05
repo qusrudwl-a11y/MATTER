@@ -131,7 +131,6 @@ function openRatingModal(supplierId) {
     });
     container.innerHTML = '';
     navigate(`/supplier/${supplierId}`);
-    render();
   };
 }
 

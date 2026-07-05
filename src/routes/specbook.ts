@@ -108,6 +108,23 @@ specbook.post('/projects/:id/members', async (c) => {
   return c.json({ success: true, invitee: { name: invitee.name, company: invitee.company } })
 })
 
+// 팀원 스스로 프로젝트 나가기 (초대받은 팀원 본인만 가능, 소유자는 나갈 수 없고 삭제만 가능)
+specbook.post('/projects/:id/leave', async (c) => {
+  const userId = c.get('userId')
+  const id = Number(c.req.param('id'))
+  const project = await c.env.DB.prepare('SELECT id, user_id FROM projects WHERE id = ?').bind(id).first<{ id: number; user_id: number }>()
+  if (!project) return c.json({ error: '프로젝트를 찾을 수 없습니다.' }, 404)
+  if (project.user_id === userId) {
+    return c.json({ error: '소유자는 프로젝트를 나갈 수 없습니다. 삭제를 이용해주세요.' }, 400)
+  }
+
+  const result = await c.env.DB.prepare('DELETE FROM project_members WHERE project_id = ? AND user_id = ?').bind(id, userId).run()
+  if (!result.meta.changes) return c.json({ error: '참여 중인 프로젝트가 아닙니다.' }, 404)
+
+  await c.env.DB.prepare("INSERT INTO activity_logs (user_id, action, detail) VALUES (?, 'project_leave', ?)").bind(userId, `project#${id}`).run()
+  return c.json({ success: true })
+})
+
 // 팀원 제거 (소유자만)
 specbook.delete('/projects/:id/members/:memberId', async (c) => {
   const userId = c.get('userId')

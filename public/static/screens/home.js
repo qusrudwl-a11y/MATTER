@@ -204,7 +204,6 @@ route('/material/:id', async (params) => {
       try {
         await axios.post(`/materials/${m.id}/photo`, { image_base64: ev.target.result });
         navigate(`/material/${m.id}`);
-        render();
       } catch (err) {
         alert('사진 업로드 실패: ' + (err.response?.data?.error || err.message));
       }
@@ -237,7 +236,6 @@ function openPriceReportModal(materialId) {
     await axios.post(`/materials/${materialId}/price-report`, { price });
     container.innerHTML = '';
     navigate(`/material/${materialId}`);
-    render();
   };
 }
 
@@ -279,7 +277,6 @@ function openAddCategoryModal() {
       await axios.post('/materials/categories', { name });
       container.innerHTML = '';
       navigate('/home');
-      render();
     } catch (e) {
       errEl.textContent = e.response?.data?.error || '카테고리 추가 중 오류가 발생했습니다.';
       errEl.classList.remove('hidden');

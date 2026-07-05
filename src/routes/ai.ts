@@ -211,11 +211,14 @@ ai.post('/vision-scan', authMiddleware, async (c) => {
     }
   }
 
+  // detected_category 컬럼에는 카테고리명(한글) 대신 slug를 저장해서, 등록(save) 시 정확한 카테고리 매칭이 가능하도록 함
+  // (한글 카테고리명은 AI 응답마다 표기가 미묘하게 달라질 수 있어 매칭 실패 위험이 있음)
+  const detectedSlug = CATEGORY_SLUGS.includes(parsed.category_slug) ? parsed.category_slug : 'wood'
   const scanResult = await c.env.DB.prepare(`
     INSERT INTO vision_scans (user_id, image_url, detected_category, detected_type, detected_finish, estimated_price_text, confidence_note)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).bind(
-    userId, storedImageUrl || '', parsed.category_name_kr || parsed.category_slug,
+    userId, storedImageUrl || '', detectedSlug,
     parsed.material_type || null, parsed.surface_finish || null,
     `${parsed.estimated_price_min ?? '-'} ~ ${parsed.estimated_price_max ?? '-'}원/㎡`,
     parsed.confidence_note || null
@@ -247,8 +250,11 @@ ai.post('/vision-scan/:id/save', authMiddleware, async (c) => {
   const scan = await c.env.DB.prepare('SELECT * FROM vision_scans WHERE id = ? AND user_id = ?').bind(scanId, userId).first<any>()
   if (!scan) return c.json({ error: '스캔 결과를 찾을 수 없습니다.' }, 404)
 
-  const category = await c.env.DB.prepare('SELECT id FROM categories WHERE name = ?').bind(scan.detected_category).first<{ id: number }>()
-    ?? await c.env.DB.prepare('SELECT id FROM categories LIMIT 1').first<{ id: number }>()
+  // detected_category에는 slug가 저장되어 있음 (vision-scan 저장 시점에 slug로 정규화됨).
+  // 혹시 과거 데이터 등으로 slug가 아닌 값이 들어있는 경우를 대비해 slug 매칭 실패 시 name 매칭도 시도.
+  const category = await c.env.DB.prepare('SELECT id FROM categories WHERE slug = ?').bind(scan.detected_category).first<{ id: number }>()
+    ?? await c.env.DB.prepare('SELECT id FROM categories WHERE name = ?').bind(scan.detected_category).first<{ id: number }>()
+    ?? await c.env.DB.prepare('SELECT id FROM categories WHERE slug = ?').bind('wood').first<{ id: number }>()
 
   const priceMatch = scan.estimated_price_text?.match(/(\d+)\s*~\s*(\d+)/)
   const priceMin = priceMatch ? Number(priceMatch[1]) : null

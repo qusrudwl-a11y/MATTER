@@ -28,7 +28,17 @@ function clearSession() {
 // ===== Simple Hash Router =====
 const routes = {};
 function route(path, handler) { routes[path] = handler; }
-function navigate(path) { window.location.hash = path; }
+// 같은 경로로 재이동(예: 모달 제출 후 새로고침 목적)할 때는 hashchange 이벤트가 발생하지 않으므로
+// 그 경우에만 직접 render()를 호출하고, 실제로 경로가 바뀌는 경우는 hashchange 이벤트에 위임해
+// 이중 렌더링(및 이중 API 호출)을 방지한다.
+function navigate(path) {
+  const newHash = '#' + path;
+  if (window.location.hash === newHash) {
+    render();
+  } else {
+    window.location.hash = path;
+  }
+}
 
 window.addEventListener('hashchange', render);
 window.addEventListener('DOMContentLoaded', () => {

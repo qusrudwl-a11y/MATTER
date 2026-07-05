@@ -132,6 +132,5 @@ function openFeedbackModal() {
     container.innerHTML = '';
     alert('소중한 의견 감사합니다. 개발자가 확인 후 반영하겠습니다.');
     navigate('/mypage');
-    render();
   };
 }

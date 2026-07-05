@@ -7,7 +7,6 @@ function adminAuthed() { return !!AdminAPI.token; }
 function adminHeaders() { return { Authorization: `Bearer ${AdminAPI.token}` }; }
 
 route('/admin', async () => {
-  const app = document.getElementById('app');
   if (!adminAuthed()) {
     renderAdminLogin();
     return;
@@ -48,7 +47,6 @@ function renderAdminLogin() {
       AdminAPI.token = data.token;
       localStorage.setItem('matter_admin_token', data.token);
       navigate('/admin');
-      render();
     } catch (e) {
       errEl.textContent = e.response?.data?.error || '로그인 실패';
       errEl.classList.remove('hidden');
@@ -140,13 +138,12 @@ async function renderAdminDashboard() {
     localStorage.removeItem('matter_admin_token');
     AdminAPI.token = null;
     navigate('/admin');
-    render();
   };
 
   document.querySelectorAll('.admin-resolve-btn').forEach((btn) => {
     btn.onclick = async () => {
       await axios.put(`/admin/feedback/${btn.dataset.id}`, { status: 'resolved' }, { headers: adminHeaders() });
-      navigate('/admin'); render();
+      navigate('/admin');
     };
   });
   document.querySelectorAll('.admin-reply-btn').forEach((btn) => {
@@ -154,7 +151,7 @@ async function renderAdminDashboard() {
       const reply = prompt('사용자에게 보낼 답변을 입력하세요:');
       if (!reply) return;
       await axios.put(`/admin/feedback/${btn.dataset.id}`, { admin_reply: reply, status: 'resolved' }, { headers: adminHeaders() });
-      navigate('/admin'); render();
+      navigate('/admin');
     };
   });
 }

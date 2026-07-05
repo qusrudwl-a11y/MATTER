@@ -56,7 +56,9 @@ route('/specbook/:id', async (params) => {
 
   app.innerHTML = `
   <div class="page">
-    ${topHeader(p.name, { back: true, right: isOwner ? `<button id="delete-project-btn" class="text-red-400 text-sm"><i class="fas fa-trash"></i></button>` : '' })}
+    ${topHeader(p.name, { back: true, right: isOwner
+      ? `<button id="delete-project-btn" class="text-red-400 text-sm"><i class="fas fa-trash"></i></button>`
+      : `<button id="leave-project-btn" class="text-gray-400 text-sm"><i class="fas fa-right-from-bracket"></i> 나가기</button>` })}
     <div class="px-4 pt-4">
       <div class="bg-deepgreen text-white rounded-xl p-4 mb-4 flex justify-between items-center">
         <div>
@@ -116,6 +118,12 @@ route('/specbook/:id', async (params) => {
       await axios.delete(`/specbook/projects/${p.id}`);
       navigate('/specbook');
     };
+  } else {
+    document.getElementById('leave-project-btn').onclick = async () => {
+      if (!confirm('이 프로젝트에서 나가시겠습니까? 참여 목록에서 제거됩니다.')) return;
+      await axios.post(`/specbook/projects/${p.id}/leave`);
+      navigate('/specbook');
+    };
   }
 
   document.getElementById('export-excel-btn').onclick = async (e) => {
@@ -146,7 +154,6 @@ window.deleteSpecItem = async (itemId, projectId) => {
   if (!confirm('이 항목을 삭제하시겠습니까?')) return;
   await axios.delete(`/specbook/items/${itemId}`);
   navigate(`/specbook/${projectId}`);
-  render();
 };
 
 function openInviteModal(projectId) {
@@ -176,7 +183,6 @@ function openInviteModal(projectId) {
       container.innerHTML = '';
       alert(`${res.data.invitee.name}님을 팀원으로 초대했습니다.`);
       navigate(`/specbook/${projectId}`);
-      render();
     } catch (e) {
       errEl.textContent = e.response?.data?.error || '초대 중 오류가 발생했습니다.';
       errEl.classList.remove('hidden');
@@ -273,6 +279,5 @@ async function openAddItemModal(projectId) {
     await axios.post(`/specbook/projects/${projectId}/items`, payload);
     container.innerHTML = '';
     navigate(`/specbook/${projectId}`);
-    render();
   };
 }

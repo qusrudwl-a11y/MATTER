@@ -72,7 +72,6 @@ route('/community/:id', async (params, urlParams) => {
     if (!content) return;
     await axios.post(`/community/posts/${params.id}/comments`, { content, pin });
     navigate(`/community/${params.id}${pin ? '?pin=' + pin : ''}`);
-    render();
   };
 
   if (data.is_owner) {
@@ -103,7 +102,6 @@ function renderPinPrompt(postId) {
     const pin = document.getElementById('pin-input').value.trim();
     if (!pin) return;
     navigate(`/community/${postId}?pin=${encodeURIComponent(pin)}`);
-    render();
   };
 }
 
@@ -143,7 +141,6 @@ function openNewPostModal() {
       await axios.post('/community/posts', { title, content, is_private: isPrivate, pin });
       container.innerHTML = '';
       navigate('/community');
-      render();
     } catch (e) {
       alert(e.response?.data?.error || '등록 중 오류가 발생했습니다.');
     }
