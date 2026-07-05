@@ -3,6 +3,7 @@ export type Bindings = {
   R2: R2Bucket
   OPENAI_API_KEY: string
   OPENAI_BASE_URL: string
+  ADMIN_PASSCODE: string
 }
 
 export type Variables = {
@@ -11,6 +12,7 @@ export type Variables = {
   userName: string
   userPosition: string
   userPhone: string
+  isAdmin: boolean
 }
 
 export type AppEnv = {

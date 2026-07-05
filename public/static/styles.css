@@ -28,6 +28,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Noto Sans 
 
 .page { flex: 1; padding-bottom: 84px; }
 
+/* AI 상담 플로팅 버튼 (하단바 협력업체 고정으로 변경 후 별도 배치) */
+.ai-fab {
+  position: fixed; right: 16px; bottom: 76px; z-index: 41;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #1F2421; color: white; box-shadow: 0 4px 14px rgba(31,36,33,0.35);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.ai-fab:active { transform: scale(0.94); }
+
 /* 카테고리 카드 */
 .category-card {
   background: white; border-radius: 16px; padding: 16px; text-align: center;

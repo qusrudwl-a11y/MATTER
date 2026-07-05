@@ -18,17 +18,8 @@
       "binding": "R2",
       "bucket_name": "webapp-bucket"
     }
-  ]
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "ai": {
-  //   "binding": "AI"
-  // }
+  ],
+  "vars": {
+    "ADMIN_PASSCODE": "matter-admin-2026"
+  }
 }

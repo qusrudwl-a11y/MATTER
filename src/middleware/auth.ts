@@ -11,10 +11,10 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   }
 
   const session = await c.env.DB.prepare(
-    `SELECT s.user_id, u.company, u.name, u.position, u.phone
+    `SELECT s.user_id, u.company, u.name, u.position, u.phone, u.is_admin
      FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token = ? AND s.expires_at > datetime('now')`
-  ).bind(token).first<{ user_id: number; company: string; name: string; position: string; phone: string }>()
+  ).bind(token).first<{ user_id: number; company: string; name: string; position: string; phone: string; is_admin: number }>()
 
   if (!session) {
     return c.json({ error: '세션이 만료되었습니다. 다시 로그인해주세요.' }, 401)
@@ -25,6 +25,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   c.set('userName', session.name)
   c.set('userPosition', session.position)
   c.set('userPhone', session.phone)
+  c.set('isAdmin', !!session.is_admin)
 
   await next()
 })

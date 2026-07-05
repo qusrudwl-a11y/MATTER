@@ -8,6 +8,10 @@ import suppliers from './routes/suppliers'
 import ai from './routes/ai'
 import specbook from './routes/specbook'
 import files from './routes/files'
+import admin from './routes/admin'
+import feedback from './routes/feedback'
+import mypage from './routes/mypage'
+import community from './routes/community'
 
 const app = new Hono<AppEnv>()
 
@@ -20,6 +24,10 @@ app.route('/api/suppliers', suppliers)
 app.route('/api/ai', ai)
 app.route('/api/specbook', specbook)
 app.route('/api/files', files)
+app.route('/api/admin', admin)
+app.route('/api/feedback', feedback)
+app.route('/api/mypage', mypage)
+app.route('/api/community', community)
 
 app.get('/manifest.json', (c) => {
   return c.json({
@@ -74,6 +82,9 @@ app.get('*', (c) => {
   <script src="/static/screens/ai-chat.js"></script>
   <script src="/static/screens/camera.js"></script>
   <script src="/static/screens/specbook.js"></script>
+  <script src="/static/screens/mypage.js"></script>
+  <script src="/static/screens/community.js"></script>
+  <script src="/static/screens/admin.js"></script>
 </body>
 </html>`)
 })

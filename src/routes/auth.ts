@@ -105,6 +105,7 @@ auth.get('/me', authMiddleware, async (c) => {
     name: c.get('userName'),
     position: c.get('userPosition'),
     phone: c.get('userPhone'),
+    is_admin: c.get('isAdmin'),
   })
 })
 

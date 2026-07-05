@@ -7,12 +7,30 @@ const ai = new Hono<AppEnv>()
 
 const CATEGORY_SLUGS = ['wood', 'stone', 'tile', 'metal', 'fabric', 'paint', 'glass', 'flooring']
 
+// 사용자 메시지가 서비스 불만/버그신고/기능수정 요청인지 감지 (간단 키워드 휴리스틱)
+// 감지되면 일반 자재상담과 별도로 user_feedback 테이블에 저장 -> 개발자(관리자)만 열람 가능
+const FEEDBACK_KEYWORDS = [
+  '불만', '버그', '오류', '에러', '고장', '안돼', '안 돼', '안됨', '작동이 안',
+  '느려', '이상해', '불편', '개선', '수정해', '고쳐', '문제가 있', '요청사항',
+  '건의', '피드백', '앱이 자꾸', '자꾸 꺼', '멈춰', '느림',
+]
+function isFeedbackMessage(message: string): boolean {
+  return FEEDBACK_KEYWORDS.some((kw) => message.includes(kw))
+}
+
 // ---------- AI 자재 상담 (추천 + 없는 자재 자동 생성) ----------
 ai.post('/chat', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json<{ message?: string }>()
   const message = body.message?.trim()
   if (!message) return c.json({ error: '메시지를 입력해주세요.' }, 400)
+
+  // 불만/개선 요청으로 판단되면 개발자 전용 피드백 채널에도 별도 기록 (사용자는 이 저장 여부를 알 필요 없이 그대로 상담 이어감)
+  if (isFeedbackMessage(message)) {
+    await c.env.DB.prepare(
+      "INSERT INTO user_feedback (user_id, content, category) VALUES (?, ?, 'ai_chat_detected')"
+    ).bind(userId, message).run()
+  }
 
   await c.env.DB.prepare(
     "INSERT INTO ai_chat_messages (user_id, role, content) VALUES (?, 'user', ?)"

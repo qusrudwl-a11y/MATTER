@@ -6,7 +6,9 @@ const API = {
 
 axios.defaults.baseURL = '/api';
 axios.interceptors.request.use((config) => {
-  if (API.token) config.headers.Authorization = `Bearer ${API.token}`;
+  // 관리자 API 호출은 별도 토큰을 명시적으로 넘기므로 사용자 토큰으로 덮어쓰지 않음 (계정 체계 완전 분리)
+  const isAdminCall = config.url && config.url.startsWith('/admin') && config.headers?.Authorization;
+  if (API.token && !isAdminCall) config.headers.Authorization = `Bearer ${API.token}`;
   return config;
 });
 
@@ -42,8 +44,9 @@ async function render() {
   const path = currentPath();
   const app = document.getElementById('app');
 
-  // 인증 필요 여부 체크 (splash, onboarding 제외)
-  if (!API.token && !['/splash', '/onboarding'].includes(path.split('?')[0])) {
+  // 인증 필요 여부 체크 (splash, onboarding, admin 제외 - admin은 별도 세션 체계 사용)
+  const publicPaths = ['/splash', '/onboarding', '/admin'];
+  if (!API.token && !publicPaths.includes(path.split('?')[0])) {
     navigate('/onboarding');
     return;
   }
@@ -95,13 +98,13 @@ function formatPrice(min, max, unit) {
   return `${fmt(min || max)}원/${unit || '㎡'} 내외`;
 }
 
-// ===== Bottom Navigation =====
+// ===== Bottom Navigation (협력업체 고정 포함) =====
 function bottomNav(active) {
   const items = [
     { key: 'home', icon: 'fa-house', label: '홈', path: '/home' },
-    { key: 'category', icon: 'fa-grip', label: '카테고리', path: '/categories' },
+    { key: 'suppliers', icon: 'fa-truck-fast', label: '협력업체', path: '/suppliers' },
     { key: 'camera', icon: 'fa-camera', label: '카메라', path: '/camera', isCamera: true },
-    { key: 'ai', icon: 'fa-comment-dots', label: 'AI 상담', path: '#ai' },
+    { key: 'community', icon: 'fa-comments', label: '커뮤니티', path: '/community' },
     { key: 'specbook', icon: 'fa-book', label: '스펙북', path: '/specbook' },
   ];
   return `
@@ -112,24 +115,25 @@ function bottomNav(active) {
           <div class="bottom-nav-camera"><i class="fas ${it.icon}"></i></div>
         </a>`;
       }
-      if (it.path === '#ai') {
-        return `<button onclick="openAiSheet()" class="bottom-nav-item ${active === it.key ? 'active' : ''}">
-          <i class="fas ${it.icon}"></i><span>${it.label}</span>
-        </button>`;
-      }
       return `<a href="#${it.path}" class="bottom-nav-item ${active === it.key ? 'active' : ''}">
         <i class="fas ${it.icon}"></i><span>${it.label}</span>
       </a>`;
     }).join('')}
-  </nav>`;
+  </nav>
+  <button onclick="openAiSheet()" class="ai-fab"><i class="fas fa-comment-dots"></i></button>`;
 }
 
 function topHeader(title, opts = {}) {
+  const userBtn = API.user
+    ? `<button onclick="navigate('/mypage')" class="text-xs text-gray-400 flex items-center gap-1">
+        <span>${escapeHtml(API.user.name || '')}님</span><i class="fas fa-chevron-right text-[8px]"></i>
+      </button>`
+    : '';
   return `
   <header class="sticky top-0 bg-[#F5F3EF] z-30 px-4 py-3 flex items-center gap-3 border-b border-[#e5e2da]">
     ${opts.back ? `<button onclick="history.back()" class="text-[#1F2421]"><i class="fas fa-arrow-left"></i></button>` : ''}
     <h1 class="text-lg font-bold flex-1">${title}</h1>
-    ${opts.right || ''}
+    ${opts.right || userBtn}
   </header>`;
 }
 
